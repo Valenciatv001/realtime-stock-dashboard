@@ -1,24 +1,33 @@
-import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import 'react-native-reanimated';
 
-import { useColorScheme } from '@/hooks/use-color-scheme';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import React from 'react';
 
-export const unstable_settings = {
-  anchor: '(tabs)',
-};
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 2,
+      retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30_000),
+      staleTime: 30_000,
+      gcTime: 5 * 60_000, // 5 min garbage collection
+    },
+  },
+});
 
 export default function RootLayout() {
-  const colorScheme = useColorScheme();
-
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Stack>
+    <React.Fragment>
+      <QueryClientProvider client={queryClient}>
+              <StatusBar style="auto" />  
+      <Stack> 
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
-      </Stack>
-      <StatusBar style="auto" />
-    </ThemeProvider>
+          <Stack.Screen name="stock/[symbol]" options={{ headerShown: false }} />
+          <Stack.Screen name="watchlist" options={{ headerShown: false }} />
+        </Stack>
+      </QueryClientProvider>
+      </React.Fragment>
   );
 }
